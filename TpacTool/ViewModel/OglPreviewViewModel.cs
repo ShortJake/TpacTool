@@ -1,9 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.CommandWpf;
 using OpenTK;
+using OpenTK.Platform.Windows;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Input;
 using TpacTool.Lib;
 using TpacTool.Properties;
-using GalaSoft.MvvmLight;
 
 namespace TpacTool
 {
@@ -12,6 +16,10 @@ namespace TpacTool
 		public static readonly Guid PreviewAssetEvent = Guid.NewGuid();
 
 		public static readonly Guid PreviewTextureEvent = Guid.NewGuid();
+
+		public static readonly Guid PreviewSkeletonEvent = Guid.NewGuid();
+
+		public static readonly Guid PreviewAnimationEvent = Guid.NewGuid();
 
 		public const float MAX_GRID_LENGTH = 256;
 
@@ -80,6 +88,8 @@ namespace TpacTool
 
 		private bool _enableScaleInertia = Settings.Default.PreviewScaleInertia;
 
+		private float _currentTime;
+
 		public string[] LightModeItems => _lightModeItems;
 
 		public string[] CenterModeItems => _centerModeItems;
@@ -102,6 +112,8 @@ namespace TpacTool
 
 		public bool IsImageMode => PreviewTarget == OglPreviewPage.Mode.Image;
 
+		public bool IsSkeletonMode => PreviewTarget == OglPreviewPage.Mode.Skeleton;
+		public bool IsAnimationMode => PreviewTarget == OglPreviewPage.Mode.Animation;
 		public int LightMode
 		{
 			set
@@ -205,14 +217,68 @@ namespace TpacTool
 
 		#endregion
 
-		public OglPreviewViewModel()
+		#region Skeleton & Animation
+		public Skeleton Skeleton { private set; get; }
+		public SkeletalAnimation Animation { private set; get; }
+		public AnimationClip AnimationClip { private set; get; }
+		public int FPS { set; get; }
+		public float CurrentTime
+		{
+			set
+			{
+				if (value != _currentTime)
+				{
+					_currentTime = value;
+					RaisePropertyChanged(nameof(CurrentTime));
+				}
+			}
+			get
+			{
+				return _currentTime;
+			}
+		}
+		public int AnimationStart
+		{
+			get
+			{
+				if (Animation == null || AnimationClip == null || AnimationClip.Source1 > Animation.Duration) return 0;
+				else return (int)AnimationClip.Source1;
+			}
+		}
+        public int AnimationEnd
+        {
+            get
+            {
+				if (Animation == null) return 0;
+                if (AnimationClip == null) return Animation.Duration;
+                else return (int)AnimationClip.Source2;
+            }
+        }
+        public int AnimationDuration
+        {
+            get
+            {
+				return (int)Math.Abs(AnimationEnd - AnimationStart);
+            }
+        }
+        public ICommand PlayAnimationCommand { private set; get; }
+		public bool PlayingAnimation { private set; get; }
+        #endregion
+        public OglPreviewViewModel()
 		{
 			if (!IsInDesignMode)
 			{
 				MessengerInstance.Register<List<Mesh>>(this, PreviewAssetEvent, OnPreviewModel);
 				MessengerInstance.Register<Texture>(this, PreviewTextureEvent, SetRenderTexture);
+                MessengerInstance.Register<Skeleton>(this, PreviewSkeletonEvent, OnPreviewSkeleton);
+                MessengerInstance.Register<(Skeleton, SkeletalAnimation, int, AnimationClip)>(this, PreviewAnimationEvent, OnPreviewAnimation);
 				MessengerInstance.Register<object>(this, MainViewModel.CleanupEvent, OnCleanup);
-			}
+				PlayAnimationCommand = new RelayCommand(() =>
+                {
+                    PlayingAnimation = !PlayingAnimation;
+					RaisePropertyChanged(nameof(PlayingAnimation));
+                });
+            }
 		}
 
 		private void OnCleanup(object unused = null)
@@ -434,8 +500,94 @@ namespace TpacTool
 			RaisePropertyChanged(nameof(ImageText));
 			RaisePropertyChanged(nameof(Texture));
 		}
+        private void OnPreviewSkeleton(Skeleton skeleton)
+        {
+            SetPreviewTarget(OglPreviewPage.Mode.Skeleton);
+            Skeleton = skeleton;
 
-		private void SetPreviewTarget(OglPreviewPage.Mode mode)
+			CenterOfMass = Vector3.Zero;
+            BoundingBox bb = new BoundingBox();
+			bb.BoundingSphereRadius = 2f;
+			// CenterOfMass as the average position of all bone global positions
+			var globalBoneFrames = Skeleton.Definition.Data.CreateBoneMatrices(true);
+			var maxVec = System.Numerics.Vector3.Zero;
+            foreach (var frame in globalBoneFrames)
+            { 
+                CenterOfMass += new Vector3(frame.Translation.X, frame.Translation.Y, frame.Translation.Z);
+				maxVec = System.Numerics.Vector3.Max(maxVec, System.Numerics.Vector3.Abs(frame.Translation));
+            }
+			
+            if (globalBoneFrames.Count() > 0)
+            {
+                CenterOfMass /= globalBoneFrames.Count();
+            }
+			bb = new BoundingBox(-maxVec, maxVec);
+            ClampBoundingBox(ref bb);
+            ModelBoundingBox = bb;
+            var center = ModelBoundingBox.Center;
+            CenterOfGeometry = new Vector3(center.X, center.Y, center.Z);
+            ReferenceScale = CalculateReferenceScale(ModelBoundingBox);
+            GridLineX = (int)bb.Width + 16;
+            GridLineY = (int)bb.Depth + 16;
+            RaisePropertyChanged(nameof(GridLineX));
+            RaisePropertyChanged(nameof(GridLineY));
+            RaisePropertyChanged(nameof(Skeleton));
+            RefocusCenter();
+            RaisePropertyChanged(nameof(ReferenceScale));
+            RaisePropertyChanged(nameof(ModelBoundingBox));
+        }
+        private void OnPreviewAnimation((Skeleton, SkeletalAnimation, int, AnimationClip) tuple)
+        {
+            SetPreviewTarget(OglPreviewPage.Mode.Animation);
+			Skeleton = tuple.Item1;
+            Animation = tuple.Item2;
+			FPS = tuple.Item3;
+			AnimationClip = tuple.Item4;
+
+            CenterOfMass = Vector3.Zero;
+            BoundingBox bb = new BoundingBox();
+            bb.BoundingSphereRadius = 2f;
+			if (Skeleton != null)
+			{
+                var globalBoneFrames = Skeleton.Definition.Data.CreateBoneMatrices(true);
+                var maxVec = System.Numerics.Vector3.Zero;
+                foreach (var frame in globalBoneFrames)
+                {
+                    CenterOfMass += new Vector3(frame.Translation.X, frame.Translation.Y, frame.Translation.Z);
+                    maxVec = System.Numerics.Vector3.Max(maxVec, System.Numerics.Vector3.Abs(frame.Translation));
+                }
+
+                if (globalBoneFrames.Count() > 0)
+                {
+                    CenterOfMass /= globalBoneFrames.Count();
+                }
+                bb = new BoundingBox(-maxVec, maxVec);
+            }
+            ClampBoundingBox(ref bb);
+            ModelBoundingBox = bb;
+            var center = ModelBoundingBox.Center;
+            CenterOfGeometry = new Vector3(center.X, center.Y, center.Z);
+            ReferenceScale = CalculateReferenceScale(ModelBoundingBox);
+            GridLineX = (int)bb.Width + 16;
+            GridLineY = (int)bb.Depth + 16;
+            RaisePropertyChanged(nameof(GridLineX));
+            RaisePropertyChanged(nameof(GridLineY));
+			CurrentTime = 0;
+			PlayingAnimation = true;
+			RaisePropertyChanged(nameof(Skeleton));
+            RaisePropertyChanged(nameof(Animation));
+            RaisePropertyChanged(nameof(AnimationStart));
+            RaisePropertyChanged(nameof(AnimationEnd));
+            RaisePropertyChanged(nameof(AnimationDuration));
+            RaisePropertyChanged(nameof(CurrentTime));
+            RaisePropertyChanged(nameof(FPS));
+            RaisePropertyChanged(nameof(PlayingAnimation));
+            RefocusCenter();
+            RaisePropertyChanged(nameof(ReferenceScale));
+            RaisePropertyChanged(nameof(ModelBoundingBox));
+        }
+
+        private void SetPreviewTarget(OglPreviewPage.Mode mode)
 		{
 			if (PreviewTarget != mode)
 			{
@@ -443,7 +595,9 @@ namespace TpacTool
 				RaisePropertyChanged(nameof(PreviewTarget));
 				RaisePropertyChanged(nameof(IsModelMode));
 				RaisePropertyChanged(nameof(IsImageMode));
-			}
+                RaisePropertyChanged(nameof(IsAnimationMode));
+                RaisePropertyChanged(nameof(IsSkeletonMode));
+            }
 		}
 
 		private void RefocusCenter()

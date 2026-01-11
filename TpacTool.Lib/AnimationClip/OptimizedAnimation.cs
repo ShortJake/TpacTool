@@ -61,105 +61,107 @@ namespace TpacTool.Lib
 
 		public override void ReadData(BinaryReader stream, IDictionary<object, object> userdata, int totalSize)
 		{
-			var cur = stream.BaseStream.Position;
-			UnknownInt1 = stream.ReadInt32(); // always 1
-			UnknownInt2 = stream.ReadInt32(); // always 1
-			FrameCount = stream.ReadInt32();
-			Skeleton = stream.ReadSizedString();
-			int frameNum2 = stream.ReadInt32();
-			if (frameNum2 != FrameCount)
-			{
-				throw new Exception($"Frames not equal: {FrameCount} - {frameNum2}");
-			}
-			int boneNum = stream.ReadInt32();
-			BoneAnims.Clear();
-			BoneAnims.Capacity = boneNum;
-			for (int i = 0; i < boneNum; i++)
-			{
-				var boneAnim = new OptimizedBoneAnim();
+            var cur = stream.BaseStream.Position;
+            UnknownInt1 = stream.ReadInt32(); // always 2 ?
+            UnknownInt2 = stream.ReadInt32(); // always 1
+            FrameCount = stream.ReadInt32();
+            var frameNum2 = stream.ReadInt32();
+            if (frameNum2 != FrameCount)
+            {
+                throw new Exception($"Frames not equal: {FrameCount} - {frameNum2}");
+            }
 
-				boneAnim.UnknownInt1 = stream.ReadInt32();
-				var boneKeyframeNum = stream.ReadInt32();
+            var boneNum = stream.ReadInt32();
+            BoneAnims.Clear();
+            BoneAnims.Capacity = boneNum;
+            stream.ReadInt32(); // 0
+            for (int i = 0; i < boneNum; i++)
+            {
+                var boneAnim = new OptimizedBoneAnim();
 
-				var boneTimes = new float[boneKeyframeNum];
-				for (int j = 0; j < boneKeyframeNum; j++)
-				{
-					boneTimes[j] = stream.ReadSingle();
-				}
+                //boneAnim.UnknownInt1 = stream.ReadInt32();
+                //var boneKeyframeNum = stream.ReadInt32();
+                var boneKeyframeNum = stream.ReadInt16();
 
-				var quats = new Quaternion[boneKeyframeNum];
-				for (int j = 0; j < boneKeyframeNum; j++)
-				{
-					quats[j] = stream.ReadQuat();
-				}
+                var boneTimes = new float[boneKeyframeNum];
+                for (int j = 0; j < boneKeyframeNum; j++)
+                {
+                    boneTimes[j] = stream.ReadSingle();
+                }
 
-				boneAnim.RotationFrames.Capacity = boneKeyframeNum;
-				for (int j = 0; j < boneKeyframeNum; j++)
-				{
-					boneAnim.RotationFrames.Add(boneTimes[j], new AnimationFrame<Quaternion>(
-						boneTimes[j], quats[j]));
-				}
+                var quats = new Quaternion[boneKeyframeNum];
+                for (int j = 0; j < boneKeyframeNum; j++)
+                {
+                    quats[j] = stream.ReadQuat();
+                }
 
-				boneAnim.UnknownInt2 = stream.ReadInt32();
-				boneAnim.UnknownInt3 = stream.ReadInt32();
-				BoneAnims.Add(boneAnim);
-			}
+                boneAnim.RotationFrames.Capacity = boneKeyframeNum;
+                for (int j = 0; j < boneKeyframeNum; j++)
+                {
+                    boneAnim.RotationFrames.Add(boneTimes[j], new AnimationFrame<Quaternion>(
+                        boneTimes[j], quats[j]));
+                }
 
-			int rootKeyframeNum = stream.ReadInt32();
-			var rootTimes = new float[rootKeyframeNum];
-			for (int i = 0; i < rootKeyframeNum; i++)
-			{
-				rootTimes[i] = stream.ReadSingle();
-			}
-			var positions = new Vector4[rootKeyframeNum];
-			for (int i = 0; i < rootKeyframeNum; i++)
-			{
-				positions[i] = stream.ReadVec4();
-			}
+                boneAnim.UnknownInt2 = stream.ReadInt32();
+                boneAnim.UnknownInt3 = stream.ReadInt32();
+                BoneAnims.Add(boneAnim);
+            }
 
-			RootPositionFrames.Clear();
-			RootPositionFrames.Capacity = rootKeyframeNum;
-			for (int i = 0; i < rootKeyframeNum; i++)
-			{
-				RootPositionFrames.Add(rootTimes[i], new AnimationFrame<Vector4>(
-					rootTimes[i], positions[i]));
-			}
+            int rootKeyframeNum = stream.ReadInt32();
+            var rootTimes = new float[rootKeyframeNum];
+            for (int i = 0; i < rootKeyframeNum; i++)
+            {
+                rootTimes[i] = stream.ReadSingle();
+            }
+            var positions = new Vector4[rootKeyframeNum];
+            for (int i = 0; i < rootKeyframeNum; i++)
+            {
+                positions[i] = stream.ReadVec4();
+            }
 
-			UnknownInt3 = stream.ReadInt32(); // always 0
-			UnknownByte = stream.ReadByte(); // always 1
-			byte boneNum2 = stream.ReadByte();
-			int activityFrameNum = stream.ReadInt32();
-			UnknownInt4 = stream.ReadInt32(); // always 0
-			BoneActivities.FrameCount = activityFrameNum;
-			BoneActivities.BoneCount = boneNum2;
+            RootPositionFrames.Clear();
+            RootPositionFrames.Capacity = rootKeyframeNum;
+            for (int i = 0; i < rootKeyframeNum; i++)
+            {
+                RootPositionFrames.Add(rootTimes[i], new AnimationFrame<Vector4>(
+                    rootTimes[i], positions[i]));
+            }
 
-			byte[] lastBytes = null;
-			for (int i = 0; i < activityFrameNum; i++)
-			{
-				var bytes = stream.ReadBytes(boneNum2);
+            UnknownInt3 = stream.ReadInt32(); // always 0
+            UnknownByte = stream.ReadByte(); // always 1
+            byte boneNum2 = stream.ReadByte();
+            int activityFrameNum = stream.ReadInt32();
+            UnknownInt4 = stream.ReadInt32(); // always 0
+            BoneActivities.FrameCount = activityFrameNum;
+            BoneActivities.BoneCount = boneNum2;
 
-				if (lastBytes == null)
-				{
-					BoneActivities.SetBoneActivityRange(i,
-						bytes.Select(b => b != 0).ToArray());
-				}
-				else
-				{
-					BoneActivities.SetBoneActivityRange(i,
-						bytes.Select((b, index) => b > lastBytes[index]).ToArray());
-				}
+            byte[] lastBytes = null;
+            for (int i = 0; i < activityFrameNum; i++)
+            {
+                var bytes = stream.ReadBytes(boneNum2);
 
-				lastBytes = bytes;
-			}
+                if (lastBytes == null)
+                {
+                    BoneActivities.SetBoneActivityRange(i,
+                        bytes.Select(b => b != 0).ToArray());
+                }
+                else
+                {
+                    BoneActivities.SetBoneActivityRange(i,
+                        bytes.Select((b, index) => b > lastBytes[index]).ToArray());
+                }
 
-			UnknownOffset = stream.ReadInt32(); // always equals length - boneNum2 * 17
-			var length = stream.BaseStream.Position - cur;
-			int delta = (int) length - UnknownOffset;
+                lastBytes = bytes;
+            }
 
-			// not finished yet
-		}
+            UnknownOffset = stream.ReadInt32(); // always equals length - boneNum2 * 17
+            var length = stream.BaseStream.Position - cur;
+            int delta = (int)length - UnknownOffset;
 
-		public override void WriteData(BinaryWriter stream, IDictionary<object, object> userdata)
+            // not finished yet
+        }
+
+        public override void WriteData(BinaryWriter stream, IDictionary<object, object> userdata)
 		{
 			var writePos = stream.BaseStream.Position;
 

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Numerics;
 using JetBrains.Annotations;
+using TpacTool.Lib.SkeletalAnimGenMethods;
 
 namespace TpacTool.Lib
 {
@@ -18,10 +20,18 @@ namespace TpacTool.Lib
 
 		[CanBeNull]
 		public ExternalLoader<SkeletonUserData> UserData { set; get; }
+        // Metadata for generating animations. This isn't saved and doesn't affect the tpac file
+        //public AnimGenBoneData[] AnimGenData;
+        public SkeletalAnimGenMethodBase[] AnimGenData;
 
-		public Skeleton() : base(TYPE_GUID)
+        public Skeleton() : base(TYPE_GUID)
 		{
-		}
+			AnimGenData = new SkeletalAnimGenMethodBase[64];
+			for (int i = 0; i < AnimGenData.Length; i++)
+			{
+				AnimGenData[i] = new SkeletalAnimGenStatic(i, this);
+			}
+        }
 
 		public override void ReadMetadata(BinaryReader stream, int totalSize)
 		{
@@ -52,9 +62,13 @@ namespace TpacTool.Lib
 				clone.Definition =
 					new ExternalLoader<SkeletonDefinitionData>((SkeletonDefinitionData) Definition.Data.Clone());
 			}
-
-			// TODO: clone user data
-
+			if (UserData != null)
+			{
+				clone.UserData = new ExternalLoader<SkeletonUserData>((SkeletonUserData)UserData.Data.Clone());
+				clone.UserData.OwnerGuid = Guid;
+			}
+			clone.SetDataSegment(null, clone.Definition);
+			clone.SetDataSegment(null, clone.UserData);
 			clone.CloneDo(this);
 			return clone;
 		}

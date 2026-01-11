@@ -77,6 +77,32 @@ namespace TpacTool.Lib
 			}
 
 			base.ConsumeDataSegments(externalData);
+
 		}
-	}
+
+        public override AssetItem Clone()
+        {
+            var clone = new SkeletalAnimation()
+            {
+                Version = this.Version,
+
+                UnknownBool = this.UnknownBool,
+                Skeleton = this.Skeleton,
+				BoneNum = this.BoneNum,
+				Duration = this.Duration,
+				UnknownInt = this.UnknownInt,
+				GeometryGuid = this.GeometryGuid
+				
+            };
+
+            if (Definition?.Data != null)
+            {
+                clone.Definition =
+                    new ExternalLoader<AnimationDefinitionData>(Definition.Data.DeepCopy());
+            }
+
+            clone.CloneDo(this);
+            return clone;
+        }
+    }
 }

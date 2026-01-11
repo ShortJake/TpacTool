@@ -89,8 +89,8 @@ Model                  |  70%    |:heavy_check_mark:|:heavy_check_mark:|:x:|:x:
 Material               |  70%    |:heavy_check_mark:|:heavy_check_mark:|:x:|:x:
 Texture                |  70%    |:heavy_check_mark:|:heavy_check_mark:|:x:|:x:
 Physics Shape<sup>2</sup>|  30%    |:x:|:construction:|:x:|:x:
-Skeleton               |  60%    |:x:|:heavy_check_mark:<sup>3</sup>|:x:|:x:
-Skeletal Animation     |  80%    |:x:|:construction:|:x:|:x:
+Skeleton               |  60%    |:heavy_check_mark:|:heavy_check_mark:<sup>3</sup>|:construction:|:x:
+Skeletal Animation     |  80%    |:heavy_check_mark:|:construction:|:x:|:x:
 Vertex Animation<sup>4</sup>|  90%    |:x:|:heavy_check_mark:<sup>3</sup>|:x:|:x:
 Shader                 |  60%    |:x:|:x:|:x:|:x:
 Particle<sup>5</sup>   |  30%    |:x:|:x:|:x:|:x:

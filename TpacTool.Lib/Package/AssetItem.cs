@@ -18,6 +18,8 @@ namespace TpacTool.Lib
 
 		public List<UnknownDependence> UnknownDependences { private set; get; }
 
+		public long OriginalUnknownChecksum = 0;
+
 		public uint Version { protected internal set; get; }
 
 		public Guid Guid

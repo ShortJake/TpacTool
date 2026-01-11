@@ -108,7 +108,7 @@ namespace TpacTool.Lib
 			return new BinaryReader(file.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
 		}
 
-		public static BinaryReader CreateBinaryReader(this byte[] data)
+        public static BinaryReader CreateBinaryReader(this byte[] data)
 		{
 			//if (data == null)
 			//	throw new ArgumentNullException("data");
@@ -241,5 +241,5 @@ namespace TpacTool.Lib
 			var length = reader.BaseStream.Position - DEBUG_POSITION.Value;
 			Debug.Assert(length == readLength);
 		}
-	}
+    }
 }

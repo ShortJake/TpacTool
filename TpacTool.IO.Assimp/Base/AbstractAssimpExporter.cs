@@ -433,12 +433,18 @@ namespace TpacTool.IO.Assimp
 							if (data.RootScaleFrames.Count > 0)
 							{
 								Vector3 cur;
-								var next = data.RootScaleFrames.FirstOrDefault(pair => pair.Value.Time > time);
-								var prev = data.RootScaleFrames.LastOrDefault(pair => pair.Value.Time < time);
-								if (next.Key == 0f)
+								var nextVec4 = data.RootScaleFrames.FirstOrDefault(pair => pair.Value.Time > time);
+								var prevVec4 = data.RootScaleFrames.LastOrDefault(pair => pair.Value.Time < time);
+								var nextVec3 = new Vector3(nextVec4.Value.Value.X, nextVec4.Value.Value.Y, nextVec4.Value.Value.Z);
+                                var prevVec3 = new Vector3(prevVec4.Value.Value.X, prevVec4.Value.Value.Y, prevVec4.Value.Value.Z);
+								var next = new KeyValuePair<float, AnimationFrame<Vector3>>(nextVec4.Key, new AnimationFrame<Vector3>(nextVec4.Value.Time, nextVec3));
+                                var prev = new KeyValuePair<float, AnimationFrame<Vector3>>(prevVec4.Key, new AnimationFrame<Vector3>(prevVec4.Value.Time, prevVec3));
+                                if (next.Key == 0f)
 								{
-									cur = data.RootScaleFrames.LastOrDefault().Value.Value;
-								}
+                                    //cur = data.RootScaleFrames.LastOrDefault().Value.Value;
+                                    var lastVec4 = data.RootScaleFrames.LastOrDefault().Value.Value;
+									cur = new Vector3(lastVec4.X, lastVec4.Y, lastVec4.Z);
+                                }
 								else if (prev.Key == 0f)
 								{
 									throw new Exception(); // todo: ? ? ?
@@ -531,7 +537,7 @@ namespace TpacTool.IO.Assimp
 									else if (prev.Key == 0f)
 									{
 										throw new Exception(); // todo: ? ? ?
-									}
+                                    }
 									else
 									{
 										cur = Vector4.Lerp(prev.Value.Value, next.Value.Value,
@@ -563,8 +569,8 @@ namespace TpacTool.IO.Assimp
 									}
 									else if (prev.Key == 0f)
 									{
-										throw new Exception(); // todo: ? ? ?
-									}
+                                        throw new Exception(); // todo: ? ? ?
+                                    }
 									else
 									{
 										cur = System.Numerics.Quaternion.Slerp(prev.Value.Value, next.Value.Value,

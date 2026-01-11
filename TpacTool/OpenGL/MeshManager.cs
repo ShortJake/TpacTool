@@ -255,7 +255,50 @@ namespace TpacTool
 				BindVertexArray(0);
 			}
 
-			public void Draw()
+            public OglMesh(int[] indices, float[] positions, int boneIndex)
+            {
+                _vaoId = GenVertexArray();
+                BindVertexArray(_vaoId);
+
+                _vertexCount = indices.Length;
+                _vboIds = new int[7];
+                GenBuffers(7, _vboIds);
+
+                BindBuffer(BufferTarget.ElementArrayBuffer, _vboIds[0]);
+                BufferData(BufferTarget.ElementArrayBuffer,
+                    sizeof(uint) * indices.Length,
+                    indices,
+                    BufferUsageHint.StaticDraw);
+
+                BindBuffer(BufferTarget.ArrayBuffer, _vboIds[1]);
+                BufferData(BufferTarget.ArrayBuffer,
+                    sizeof(float) * positions.Length,
+                    positions,
+                    BufferUsageHint.StaticDraw);
+                VertexAttribPointer(VBO_POSITION, 3, VertexAttribPointerType.Float, false, 0, 0);
+                EnableVertexAttribArray(VBO_POSITION);
+
+                BindBuffer(BufferTarget.ArrayBuffer, _vboIds[VBO_BONEID]);
+                BufferData(BufferTarget.ArrayBuffer,
+                    4 * sizeof(byte),
+                    new int[] { boneIndex },
+                    BufferUsageHint.StaticDraw);
+                VertexAttribPointer(VBO_BONEID, 4, VertexAttribPointerType.UnsignedByte, false, 0, 0);
+                EnableVertexAttribArray(VBO_BONEID);
+
+                BindBuffer(BufferTarget.ArrayBuffer, _vboIds[VBO_BONEWEIGHT]);
+                BufferData(BufferTarget.ArrayBuffer,
+                    4 * sizeof(byte),
+                    new float[] {1f},
+                    BufferUsageHint.StaticDraw);
+                VertexAttribPointer(VBO_BONEWEIGHT, 4, VertexAttribPointerType.UnsignedByte, true, 0, 0);
+                EnableVertexAttribArray(VBO_BONEWEIGHT);
+
+
+                BindVertexArray(0);
+            }
+
+            public void Draw()
 			{
 				if (_vaoId >= 0)
 				{

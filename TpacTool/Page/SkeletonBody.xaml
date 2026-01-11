@@ -1,0 +1,99 @@
+﻿<Page x:Class="TpacTool.SkeletonBody"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:TpacTool"
+      mc:Ignorable="d" 
+      d:DesignHeight="1500" d:DesignWidth="300"
+      Title="SkeletonBody">
+    <Page.DataContext>
+        <Binding Path="Skeleton" Source="{StaticResource Locator}"/>
+    </Page.DataContext>
+    <Grid>
+        <Grid.Background>
+            <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}"/>
+        </Grid.Background>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Label>Bone Bodies</Label>
+                <Grid Margin="5,0,5,5">
+                    <ComboBox Text="Select A Bone"  ItemsSource="{Binding Path=SkeletonBones, Mode=OneWay}" DisplayMemberPath="BoneName" SelectedIndex="{Binding SelectedBoneIndex, Mode=OneWayToSource}" SelectedItem="{Binding SelectedBone, Mode=TwoWay}"/>
+                </Grid>
+                <Grid>
+                    <Label Content="Name"/>
+                    <TextBox Text="{Binding SelectedBone.BoneName, Mode=TwoWay}" IsReadOnly="False" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                </Grid>
+                <Grid>
+                    <Label Content="Index"/>
+                    <TextBlock Text="{Binding SelectedBoneIndex, Mode=OneWay}" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                </Grid>
+                <Grid>
+                    <Label Content="Type"/>
+                    <TextBox Text="{Binding SelectedBone.Type, Mode=TwoWay}" IsReadOnly="False" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                </Grid>
+                <Grid>
+                    <Label Content="Body Type"/>
+                    <TextBox Text="{Binding SelectedBone.BodyType, Mode=TwoWay}" IsReadOnly="False" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                </Grid>
+                <Grid>
+                    <Label Content="Mass"/>
+                    <TextBox Text="{Binding SelectedBone.Mass, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                </Grid>
+                <Expander Header="Collision Body" Margin="5,0,5,5" IsExpanded="True" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                    <StackPanel Margin="0,0,4,0">
+                        <Grid>
+                            <Label Content="Radius"/>
+                            <TextBox Text="{Binding SelectedBone.CollisionRadius, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,0,0,0" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Grid>
+                            <Label Content="Max Radius"/>
+                            <TextBox Text="{Binding SelectedBone.CollisionMaxRadius, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,0,0,0" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Grid>
+                            <Label Content="Position 1"/>
+                            <TextBox Text="{Binding SelectedBone.CollisionPosition1, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Grid>
+                            <Label Content="Position 2"/>
+                            <TextBox Text="{Binding SelectedBone.CollisionPosition2, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+                <Expander Header="Ragdoll Body" Margin="5,0,5,5" IsExpanded="True" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                    <StackPanel Margin="0,0,4,0">
+                        <Grid>
+                            <Label Content="Radius"/>
+                            <TextBox Text="{Binding SelectedBone.RagdollRadius, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,0,0,0" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Grid>
+                            <Label Content="Position 1"/>
+                            <TextBox Text="{Binding SelectedBone.RagdollPosition1, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Grid>
+                            <Label Content="Position 2"/>
+                            <TextBox Text="{Binding SelectedBone.RagdollPosition2, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="85,2,0,2" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+                <Grid Margin="0,0,0,10">
+                    <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Remove Bone Body" Command="{Binding RemoveBoneBodyCommand, Mode=OneWay}" IsEnabled="true"/>
+                </Grid>
+                <Grid Margin="0,0,0,10">
+                    <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Add Bone Body" Command="{Binding AddBoneBodyCommand, Mode=OneWay}" IsEnabled="true"/>
+                </Grid>
+                <Grid>
+                    <StackPanel Margin="10,0,0,10" Orientation="Horizontal">
+                        <ComboBox Text="Autogenerate Mode"  Margin="0,0,0,0" ItemsSource="{Binding Path=AvailableGenerateFramesMethods, Mode=OneWay}" SelectedIndex="{Binding SelectedBoneGenerateMethodIndex, Mode=TwoWay}" Width="125"/>
+                        <Button Margin="10,0,0,0" HorizontalAlignment="Center" Content="Copy" Command="{Binding CopyBoneAnimGenDataCommand, Mode=OneWay}"/>
+                        <Button Margin="10,0,0,0" HorizontalAlignment="Center" Content="Paste" Command="{Binding PasteBoneAnimGenDataCommand, Mode=OneWay}" CommandParameter="false"/>
+                        <Button Margin="10,0,0,0" HorizontalAlignment="Center" Content="Paste-Keep" Command="{Binding PasteBoneAnimGenDataCommand, Mode=OneWay}" CommandParameter="true"/>
+                    </StackPanel>
+                </Grid>
+                <Expander Header="Animation Autogenerate Data" Margin="5,5,5,5" IsExpanded="True" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                    <Frame Source="{Binding AnimGenDataPageUri, Mode=OneWay}" Width="275" HorizontalAlignment="Center"/>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

@@ -85,7 +85,7 @@ namespace TpacTool
 
 		public Mesh[] Meshes
 		{
-			get => (Mesh[]) GetValue(MeshesProperty);
+			get => (Mesh[])GetValue(MeshesProperty);
 			set => SetValue(MeshesProperty, value);
 		}
 		#endregion
@@ -98,7 +98,7 @@ namespace TpacTool
 
 		public Mode PreviewTarget
 		{
-			get => (Mode) GetValue(PreviewTargetProperty);
+			get => (Mode)GetValue(PreviewTargetProperty);
 			set => SetValue(PreviewTargetProperty, value);
 		}
 		#endregion
@@ -174,7 +174,92 @@ namespace TpacTool
 		}
 		#endregion
 
-		public static readonly DependencyProperty CameraTargetProperty =
+		#region Skeleton
+		public static readonly DependencyProperty SkeletonProperty = DependencyProperty.Register(
+			nameof(Skeleton), typeof(Skeleton),
+			typeof(OglPreviewPage),
+			new PropertyMetadata(OnSkeletonChanged));
+
+		private static void OnSkeletonChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var obj = (OglPreviewPage)d;
+			obj._shouldUpdate = true;
+		}
+
+		public Skeleton Skeleton
+		{
+			get => (Skeleton)GetValue(SkeletonProperty);
+			set => SetValue(SkeletonProperty, value);
+		}
+		#endregion
+
+		#region Animation
+		public static readonly DependencyProperty AnimationProperty = DependencyProperty.Register(
+			nameof(Animation), typeof(SkeletalAnimation),
+			typeof(OglPreviewPage),
+			new PropertyMetadata(OnAnimationChanged));
+
+		private static void OnAnimationChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var obj = (OglPreviewPage)d;
+			obj._shouldUpdate = true;
+
+        }
+
+		public SkeletalAnimation Animation
+		{
+			get => (SkeletalAnimation)GetValue(AnimationProperty);
+			set => SetValue(AnimationProperty, value);
+		}
+
+        public static readonly DependencyProperty AnimationEndProperty = DependencyProperty.Register(
+            nameof(AnimationEnd), typeof(int),
+            typeof(OglPreviewPage),
+            null);
+        public int AnimationEnd
+        {
+            get => (int)GetValue(AnimationEndProperty);
+            set => SetValue(AnimationEndProperty, value);
+        }
+        public static readonly DependencyProperty FPSProperty = DependencyProperty.Register(
+            nameof(FPS), typeof(int),
+            typeof(OglPreviewPage),
+            null);
+        public int FPS
+        {
+            get => (int)GetValue(FPSProperty);
+            set => SetValue(FPSProperty, value);
+        }
+        public static readonly DependencyProperty CurrentTimeProperty = DependencyProperty.Register(
+            nameof(CurrentTime), typeof(float),
+            typeof(OglPreviewPage),
+            null);
+        public float CurrentTime
+        {
+            get => (float)GetValue(CurrentTimeProperty);
+            set => SetValue(CurrentTimeProperty, value);
+        }
+        public static readonly DependencyProperty PlayingAnimationProperty = DependencyProperty.Register(
+            nameof(PlayingAnimation), typeof(bool),
+            typeof(OglPreviewPage),
+            null);
+        public bool PlayingAnimation
+        {
+            get => (bool)GetValue(PlayingAnimationProperty);
+            set => SetValue(PlayingAnimationProperty, value);
+        }
+        public static readonly DependencyProperty AnimationStartProperty = DependencyProperty.Register(
+            nameof(AnimationStart), typeof(int),
+            typeof(OglPreviewPage),
+            null);
+        public int AnimationStart
+        {
+            get => (int)GetValue(AnimationStartProperty);
+            set => SetValue(AnimationStartProperty, value);
+        }
+        #endregion
+
+        public static readonly DependencyProperty CameraTargetProperty =
 			DependencyProperty.Register(
 				nameof(CameraTarget), typeof(Vector3),
 				typeof(OglPreviewPage),
@@ -514,7 +599,51 @@ namespace TpacTool
 				Mode = BindingMode.OneWay
 			});
 
-			var settings = new GLWpfControlSettings
+			SetBinding(SkeletonProperty, new Binding()
+			{
+				Source = DataContext,
+				Path = new PropertyPath(nameof(Skeleton)),
+				Mode = BindingMode.OneWay
+			});
+
+			SetBinding(AnimationProperty, new Binding()
+			{
+				Source = DataContext,
+				Path = new PropertyPath(nameof(Animation)),
+				Mode = BindingMode.OneWay
+			});
+            SetBinding(FPSProperty, new Binding()
+            {
+                Source = DataContext,
+                Path = new PropertyPath(nameof(FPS)),
+                Mode = BindingMode.OneWay
+            });
+            SetBinding(CurrentTimeProperty, new Binding()
+            {
+                Source = DataContext,
+                Path = new PropertyPath(nameof(CurrentTime)),
+                Mode = BindingMode.TwoWay
+            });
+            SetBinding(PlayingAnimationProperty, new Binding()
+            {
+                Source = DataContext,
+                Path = new PropertyPath(nameof(PlayingAnimation)),
+                Mode = BindingMode.OneWay
+            });
+            SetBinding(AnimationStartProperty, new Binding()
+            {
+                Source = DataContext,
+                Path = new PropertyPath(nameof(AnimationStart)),
+                Mode = BindingMode.OneWay
+            });
+            SetBinding(AnimationEndProperty, new Binding()
+            {
+                Source = DataContext,
+                Path = new PropertyPath(nameof(AnimationEnd)),
+                Mode = BindingMode.OneWay
+            });
+
+            var settings = new GLWpfControlSettings
 			{
 				MajorVersion = 4,
 				MinorVersion = 2,
@@ -594,41 +723,89 @@ namespace TpacTool
 
 				if (_shouldUpdate)
 				{
-					_renderer.Meshes.Clear();
-					if (Meshes != null)
-					{
-						foreach (var mesh in Meshes)
-						{
-							var rm = new Renderer.RenderMesh();
-							rm.Mesh = MeshManager.Get(mesh);
-							if (mesh.Material.TryGetItem(out var mat)
-							    && mat != null
-							    && mat.Textures.TryGetValue(0, out var texRef)
-							    && texRef.TryGetItem(out var tex))
-							{
-								rm.Texture = TextureManager.Get(tex, 2048);
-								rm.AlphaTestValue = mat.AlphaTest;
-								if (mat.Flags.Contains("two_sided"))
-									rm.DoubleSides = true;
-								if (mat.ShaderMaterialFlags.Contains("alpha_test"))
-									rm.AlphaTest = true;
-							}
-							else
-							{
-								rm.Texture = TextureManager.FALLBACK_TEXTURE;
-							}
-							rm.Shader = ShaderManager.MeshShader;
-							_renderer.Meshes.Add(rm);
-						}
-					}
-					_shouldUpdate = false;
-				}
-
+					if (PreviewTarget == Mode.Model) RenderMeshes();
+					else if (PreviewTarget == Mode.Skeleton) RenderSkeleton();
+                    else if (PreviewTarget == Mode.Animation) RenderSkeletonAnimation(delta.TotalSeconds);
+                }
 				_renderer.Render(delta);
 			}
 		}
 
-		private void OpenTkControl_SizeChanged(object sender, SizeChangedEventArgs e)
+		private void RenderMeshes()
+		{
+			_renderer.Meshes.Clear();
+			if (Meshes != null)
+			{
+				foreach (var mesh in Meshes)
+				{
+					var rm = new Renderer.RenderMesh();
+					rm.Mesh = MeshManager.Get(mesh);
+					if (mesh.Material.TryGetItem(out var mat)
+						&& mat != null
+						&& mat.Textures.TryGetValue(0, out var texRef)
+						&& texRef.TryGetItem(out var tex))
+					{
+						rm.Texture = TextureManager.Get(tex, 2048);
+						rm.AlphaTestValue = mat.AlphaTest;
+						if (mat.Flags.Contains("two_sided"))
+							rm.DoubleSides = true;
+						if (mat.ShaderMaterialFlags.Contains("alpha_test"))
+							rm.AlphaTest = true;
+					}
+					else
+					{
+						rm.Texture = TextureManager.FALLBACK_TEXTURE;
+					}
+					rm.Shader = ShaderManager.MeshShader;
+					_renderer.Meshes.Add(rm);
+				}
+			}
+			_shouldUpdate = false;
+		}
+		private void RenderSkeleton()
+		{
+			_renderer.Meshes.Clear();
+			if (Skeleton != null)
+			{
+				AnimationManager.CreateOctahedralBoneMeshes(Skeleton);
+				foreach (var bone in AnimationManager.CurrentBoneMeshes)
+				{
+					_renderer.Meshes.Add(bone);
+				}
+			}
+			_shouldUpdate = false;
+		}
+		private void RenderSkeletonAnimation(double dt)
+		{
+			// Very inefficient currently. It recreates the bone meshes every frame
+			// TODO: Change position of meshes already present?
+            _renderer.Meshes.Clear();
+            if (Skeleton != null && Animation != null)
+			{
+                AnimationManager.CreateOctahedralBoneMeshes(Skeleton, Animation, CurrentTime, AnimationStart);
+                foreach (var bone in AnimationManager.CurrentBoneMeshes)
+                {
+                    _renderer.Meshes.Add(bone);
+                }
+            }
+			if (PlayingAnimation)
+			{
+                var duration = AnimationEnd - AnimationStart;
+                if (AnimationEnd > AnimationStart)
+				{
+                    CurrentTime += (float)dt * FPS;
+                    if (CurrentTime > duration) CurrentTime = 0;
+                }
+				else
+				{
+                    CurrentTime -= (float)dt * FPS;
+					if (CurrentTime < 0) CurrentTime = -duration;
+                }
+			}
+            _shouldUpdate = true;
+        }
+
+        private void OpenTkControl_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			_renderer.Resize();
 		}

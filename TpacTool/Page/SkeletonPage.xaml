@@ -1,0 +1,101 @@
+﻿<Page
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:TpacTool"
+      xmlns:TpacTool="clr-namespace:TpacTool"
+      xmlns:loc="clr-namespace:TpacTool.Properties"
+      x:Class="TpacTool.SkeletonPage"
+      mc:Ignorable="d" 
+      d:DesignHeight="1500" d:DesignWidth="600"
+      Title="SkeletonPage" Width="600">
+    <Page.Resources>
+        <TpacTool:BooleanFlipConverter x:Key="BooleanFlipConverter"/>
+        <TpacTool:EnumEqualConverter x:Key="EnumEqualConverter"/>
+    </Page.Resources>
+    <Page.DataContext>
+        <Binding Path="Skeleton" Source="{StaticResource Locator}"/>
+    </Page.DataContext>
+    <Grid>
+        <Grid.Background>
+            <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}"/>
+        </Grid.Background>
+        <StackPanel Orientation="Horizontal">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" MaxWidth="200">
+                <StackPanel>
+                    <Expander Header="Skeleton Poperties" Margin="0" IsExpanded="True">
+                        <StackPanel Margin="0,5,0,0">
+                            <Expander Header="{x:Static loc:Resources.Model_PerMeshProperties_Info}" Margin="5,0,5,5" IsExpanded="True" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                                <StackPanel Margin="0,0,4,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Content="{x:Static loc:Resources.Model_PerMeshProperties_Name}"/>
+                                        <TextBox Text="{Binding SelectedSkeleton.Name, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="60,0,0,0" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid>
+                                        <Label Content="Type:"/>
+                                        <TextBox Text="{Binding SelectedSkeleton.Type, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="60,2,0,2" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid>
+                                        <Grid>
+                                            <Label Content="BBox Min"/>
+                                            <TextBox Text="{Binding SelectedSkeleton.UserData.Data.BoundingBoxMin, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="60,2,0,2" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Grid>
+                                    <Grid>
+                                        <Grid>
+                                            <Label Content="BBox Max"/>
+                                            <TextBox Text="{Binding SelectedSkeleton.UserData.Data.BoundingBoxMax, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="60,2,0,2" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Grid>
+                                    <Grid>
+                                        <Label Content="BBox&#xD;&#xA;Padding&#xD;&#xA;"/>
+                                        <TextBox Text="{Binding SelectedSkeleton.UserData.Data.BoundingBoxPadding, Mode=OneWay}" IsReadOnly="True" Height="22" Margin="60,2,0,2" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid/>
+                                    <CheckBox Content="Override BBox" Margin="10,2,10,5" IsEnabled="False" IsChecked="false"/>
+                                </StackPanel>
+                            </Expander>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Show Bone Bodies" Command="{Binding SelectBonesPageCommand, Mode=OneWay}" IsEnabled="true"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Show D6 Joints" Command="{Binding SelectD6JointsPageCommand, Mode=OneWay}" IsEnabled="true"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Show IK Joints" Command="{Binding SelectIKJointsPageCommand, Mode=OneWay}" IsEnabled="true"/>
+                            </Grid>
+                        </StackPanel>
+                    </Expander>
+                    <Expander Header="{x:Static loc:Resources.Model_Export}" Margin="0" VerticalAlignment="Top" IsExpanded="True">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Copy Skeleton Properties" Command="{Binding CopyPropertiesCommand, Mode=OneWay}" IsEnabled="true"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Paste Skeleton Properties" Command="{Binding PastePropertiesCommand, Mode=OneWay}" IsEnabled="{Binding CanPasteProperties, Mode=OneWay}"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Save TPAC" Command="{Binding SaveTPACCommand, Mode=OneWay}" IsEnabled="True"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Label Content="Prefix"/>
+                                <TextBox Text="{Binding AnimationExportPrefix, Mode=TwoWay}" IsReadOnly="false" Height="22" Margin="60,0,10,0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Generate Human Animations" Command="{Binding GenerateHumanAnimationsCommand, Mode=OneWay}" IsEnabled="true"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,10">
+                                <Button VerticalAlignment="Top" Height="24" Margin="10,10,10,0" Content="Save Human Skeleton" Command="{Binding SaveHumanSkeletonCommand, Mode=OneWay}" IsEnabled="true"/>
+                            </Grid>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+            <Frame Source="{Binding CurrentPageUri, Mode=OneWay}" MinWidth="300"/>
+        </StackPanel>
+    </Grid>
+</Page>

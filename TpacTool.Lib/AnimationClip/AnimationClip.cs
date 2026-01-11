@@ -73,7 +73,7 @@ namespace TpacTool.Lib
 		public ushort UnknownUShort { set; get; }
 
 		[NotNull]
-		public string UnknownClipName { set; get; } = string.Empty;
+		public string BlendWithAnimation { set; get; } = string.Empty;
 
 		[NotNull]
 		public string ClipSource1Name { set; get; } = string.Empty;
@@ -87,11 +87,13 @@ namespace TpacTool.Lib
 		[NotNull]
 		public List<ClipUsage> ClipUsages { private set; get; } = new List<ClipUsage>(0);
 
-		public AnimationClip() : base(TYPE_GUID)
+        [CanBeNull] private ExternalLoader<OptimizedAnimation> _definition;
+		[CanBeNull] private ExternalLoader<ShortenedOptimizedAnimation> _shortDefinition;
+
+        public AnimationClip() : base(TYPE_GUID)
 		{
 		}
-
-		public override void ReadMetadata(BinaryReader stream, int totalSize)
+        public override void ReadMetadata(BinaryReader stream, int totalSize)
 		{
 			var version = stream.ReadUInt32();
 			Duration = stream.ReadSingle();
@@ -117,7 +119,7 @@ namespace TpacTool.Lib
 			UnknownInt = stream.ReadInt32();
 			if (version >= 4)
 			{
-				UnknownClipName = stream.ReadSizedString();
+				BlendWithAnimation = stream.ReadSizedString();
 				ClipSource1Name = stream.ReadSizedString();
 				ClipSource2Name = stream.ReadSizedString();
 				if (version >= 5)
@@ -145,7 +147,7 @@ namespace TpacTool.Lib
 					case "displacement":
 						var displacement = new DisplacementUsage();
 						displacement.UnknownUInt = stream.ReadUInt32();
-						displacement.DisplacementVector = stream.ReadVec4AsVec3();
+						displacement.DisplacementVector = stream.ReadVec4();
 						displacement.DisplacementEndProgress = stream.ReadSingle();
 						ClipUsages.Add(displacement);
 						break;
@@ -213,7 +215,7 @@ namespace TpacTool.Lib
 			stream.Write(BlendOutPeriod);
 			stream.Write(DoNotInterpolate);
 			stream.Write(UnknownInt);
-			stream.WriteSizedString(UnknownClipName);
+			stream.WriteSizedString(BlendWithAnimation);
 			stream.WriteSizedString(ClipSource1Name);
 			stream.WriteSizedString(ClipSource2Name);
 			stream.Write(GeneratedIndex);
@@ -230,8 +232,9 @@ namespace TpacTool.Lib
 					case "displacement":
 						var displacement = usage as DisplacementUsage;
 						stream.Write(displacement.UnknownUInt);
-						stream.WriteVec3AsVec4(displacement.DisplacementVector);
-						stream.Write(displacement.DisplacementEndProgress);
+                        //stream.WriteVec3AsVec4(displacement.DisplacementVector);
+                        stream.Write(displacement.DisplacementVector);
+                        stream.Write(displacement.DisplacementEndProgress);
 						break;
 					case "quad_movement":
 						var quad = usage as QuadMovementUsage;
@@ -269,7 +272,45 @@ namespace TpacTool.Lib
 			}
 		}
 
-		public abstract class ClipUsage
+		public override AssetItem Clone()
+		{
+			var clone = new AnimationClip();
+
+			clone.UnknownUInt1 = UnknownUInt1;
+			clone.Duration = Duration;
+			clone.Source1 = Source1;
+			clone.Source2 = Source2;
+			clone.Param1 = Param1;
+			clone.Param2 = Param2;
+			clone.Param3 = Param3;
+			clone.Priority = Priority;
+			clone.Animation = Animation;
+			clone.StepPoints = StepPoints;
+			clone.SoundCode = SoundCode;
+			clone.VoiceCode = VoiceCode;
+			clone.FacialAnimationId = FacialAnimationId;
+			clone.BlendsWithAction = BlendsWithAction;
+			clone.ContinueWithAction = ContinueWithAction;
+			clone.LeftHandPose = LeftHandPose;
+			clone.RightHandPose = RightHandPose;
+			clone.CombatParameterId = CombatParameterId;
+			clone.BlendInPeriod = BlendInPeriod;
+			clone.BlendOutPeriod = BlendOutPeriod;
+			clone.DoNotInterpolate = DoNotInterpolate;
+			clone.UnknownInt = UnknownInt;
+			clone.GeneratedIndex = GeneratedIndex;
+			clone.UnknownUInt2 = UnknownUInt2;
+			clone.UnknownUShort = UnknownUShort;
+			clone.BlendWithAnimation = BlendWithAnimation;
+			clone.ClipSource1Name = ClipSource1Name;
+			clone.ClipSource2Name = ClipSource2Name;
+			clone.Flags = Flags;
+			clone.ClipUsages = ClipUsages;
+            clone.CloneDo(this);
+            return clone;
+		}
+
+        public abstract class ClipUsage
 		{
 			[NotNull]
 			public string Type { private set; get; }
@@ -286,7 +327,7 @@ namespace TpacTool.Lib
 		{
 			public const string TYPE_NAME = "displacement";
 
-			public Vector3 DisplacementVector { set; get; } = Vector3.Zero;
+			public Vector4 DisplacementVector { set; get; } = Vector4.Zero;
 
 			public float DisplacementEndProgress { set; get; }
 

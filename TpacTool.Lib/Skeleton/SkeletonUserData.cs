@@ -19,9 +19,9 @@ namespace TpacTool.Lib
 
 		public float BoundingBoxPadding { set; get; }
 
-		public Vector3 BoundingBoxMin { set; get; }
+		public Vector4 BoundingBoxMin { set; get; }
 
-		public Vector3 BoundingBoxMax { set; get; }
+		public Vector4 BoundingBoxMax { set; get; }
 
 		[NotNull]
 		public string Usage { set; get; }
@@ -50,9 +50,9 @@ namespace TpacTool.Lib
 		public override void ReadData(BinaryReader stream, IDictionary<object, object> userdata, int totalSize)
 		{
 			BoundingBoxPadding = stream.ReadSingle();
-			BoundingBoxMin = stream.ReadVec4AsVec3();
-			BoundingBoxMax = stream.ReadVec4AsVec3();
-			Usage = stream.ReadSizedString();
+            BoundingBoxMin = stream.ReadVec4();
+            BoundingBoxMax = stream.ReadVec4();
+            Usage = stream.ReadSizedString();
 			UnknownString = stream.ReadSizedString();
 			UnknownGuid = stream.ReadGuid();
 			int num = stream.ReadInt32();
@@ -66,12 +66,12 @@ namespace TpacTool.Lib
 				body.Type = stream.ReadSizedString();
 				body.BodyType = stream.ReadSizedString();
 				body.Mass = stream.ReadSingle();
-				body.RagdollPosition1 = stream.ReadVec4AsVec3();
-				body.RagdollPosition2 = stream.ReadVec4AsVec3();
-				body.RagdollRadius = stream.ReadSingle();
-				body.CollisionPosition1 = stream.ReadVec4AsVec3();
-				body.CollisionPosition2 = stream.ReadVec4AsVec3();
-				body.CollisionRadius = stream.ReadSingle();
+                body.RagdollPosition1 = stream.ReadVec4();
+                body.RagdollPosition2 = stream.ReadVec4();
+                body.RagdollRadius = stream.ReadSingle();
+                body.CollisionPosition1 = stream.ReadVec4();
+                body.CollisionPosition2 = stream.ReadVec4();
+                body.CollisionRadius = stream.ReadSingle();
 				body.CollisionMaxRadius = stream.ReadSingle();
 				Bodies.Add(body);
 			}
@@ -88,8 +88,9 @@ namespace TpacTool.Lib
 				var s2 = stream.ReadSizedString();
 				var s3 = stream.ReadSizedString();
 				var rot = stream.ReadQuat();
-				var pos = stream.ReadVec4AsVec3();
-				Constraint constraint = null;
+                //var pos = stream.ReadVec4AsVec3();
+                var pos = stream.ReadVec4();
+                Constraint constraint = null;
 				switch (type)
 				{
 					case HingeJointConstraint.TYPE:
@@ -138,10 +139,12 @@ namespace TpacTool.Lib
 		public override void WriteData(BinaryWriter stream, IDictionary<object, object> userdata)
 		{
 			stream.Write(BoundingBoxPadding);
-			stream.WriteVec3AsVec4(BoundingBoxMin);
-			stream.WriteVec3AsVec4(BoundingBoxMax);
+            /*stream.WriteVec3AsVec4(BoundingBoxMin);
+			stream.WriteVec3AsVec4(BoundingBoxMax);*/
+            stream.Write(BoundingBoxMin);
+            stream.Write(BoundingBoxMax);
 
-			stream.WriteSizedString(Usage);
+            stream.WriteSizedString(Usage);
 			stream.WriteSizedString(UnknownString);
 			stream.Write(UnknownGuid);
 
@@ -154,12 +157,16 @@ namespace TpacTool.Lib
 				stream.WriteSizedString(body.Type);
 				stream.WriteSizedString(body.BodyType);
 				stream.Write(body.Mass);
-				stream.WriteVec3AsVec4(body.RagdollPosition1);
-				stream.WriteVec3AsVec4(body.RagdollPosition2);
-				stream.Write(body.RagdollRadius);
-				stream.WriteVec3AsVec4(body.CollisionPosition1);
-				stream.WriteVec3AsVec4(body.CollisionPosition2);
-				stream.Write(body.CollisionRadius);
+                /*stream.WriteVec3AsVec4(body.RagdollPosition1);
+				stream.WriteVec3AsVec4(body.RagdollPosition2);*/
+                stream.Write(body.RagdollPosition1);
+                stream.Write(body.RagdollPosition2);
+                stream.Write(body.RagdollRadius);
+                /*stream.WriteVec3AsVec4(body.CollisionPosition1);
+                stream.WriteVec3AsVec4(body.CollisionPosition2);*/
+                stream.Write(body.CollisionPosition1);
+                stream.Write(body.CollisionPosition2);
+                stream.Write(body.CollisionRadius);
 				stream.Write(body.CollisionMaxRadius);
 			}
 
@@ -186,9 +193,10 @@ namespace TpacTool.Lib
 				stream.WriteSizedString(constraint.Bone1);
 				stream.WriteSizedString(constraint.Bone2);
 				stream.Write(constraint.EntitySpaceRotation);
-				stream.WriteVec3AsVec4(constraint.Position);
+                //stream.WriteVec3AsVec4(constraint.Position);
+                stream.Write(constraint.Position);
 
-				switch (constraint)
+                switch (constraint)
 				{
 					case HingeJointConstraint hinge:
 						stream.Write(hinge.UnknownFloat1);
@@ -218,6 +226,30 @@ namespace TpacTool.Lib
 			}
 		}
 
+        public override ExternalData Clone()
+        {
+			var c = new SkeletonUserData();
+			c.BoundingBoxPadding = BoundingBoxPadding;
+			c.BoundingBoxMin = BoundingBoxMin;
+			c.BoundingBoxMax = BoundingBoxMax;
+			c.Usage = Usage;
+			c.UnknownGuid = UnknownGuid;
+			c.UnknownInt = UnknownInt;
+			c.UnknownString = UnknownString;
+			c.Bodies = new List<Body>();
+			foreach (var body in Bodies)
+			{
+				c.Bodies.Add(body.Clone());
+			}
+			c.Constraints = new List<Constraint>();
+			foreach (var constraint in Constraints)
+			{
+				c.Constraints.Add(constraint.Clone());
+			}
+			c.CloneDo(this);
+			return c;
+        }
+		
 		public abstract class Constraint
 		{
 			public string Name { set; get; }
@@ -228,7 +260,7 @@ namespace TpacTool.Lib
 
 			public Quaternion EntitySpaceRotation { set; get; }
 
-			public Vector3 Position { set; get; }
+			public Vector4 Position { set; get; }
 
 			protected Constraint()
 			{
@@ -237,7 +269,11 @@ namespace TpacTool.Lib
 				Bone2 = String.Empty;
 				EntitySpaceRotation = new Quaternion(1, 0, 0, 0);
 			}
-		}
+            public Constraint Clone()
+            {
+                return MemberwiseClone() as Constraint;
+            }
+        }
 
 		public class HingeJointConstraint : Constraint
 		{
@@ -246,7 +282,7 @@ namespace TpacTool.Lib
 			public float UnknownFloat1 { set; get; }
 
 			public float UnknownFloat2 { set; get; }
-		}
+        }
 
 		public class D6JointConstraint : Constraint
 		{
@@ -292,7 +328,7 @@ namespace TpacTool.Lib
 			public float TwistLowerLimit { set; get; }
 
 			public float TwistUpperLimit { set; get; }
-		}
+        }
 
 		public class Body
 		{
@@ -308,19 +344,24 @@ namespace TpacTool.Lib
 
 			public float Mass { set; get; }
 
-			public Vector3 RagdollPosition1 { set; get; }
+			public Vector4 RagdollPosition1 { set; get; }
 
-			public Vector3 RagdollPosition2 { set; get; }
+			public Vector4 RagdollPosition2 { set; get; }
 
 			public float RagdollRadius { set; get; }
 
-			public Vector3 CollisionPosition1 { set; get; }
+			public Vector4 CollisionPosition1 { set; get; }
 
-			public Vector3 CollisionPosition2 { set; get; }
+			public Vector4 CollisionPosition2 { set; get; }
 
 			public float CollisionMaxRadius { set; get; }
 
 			public float CollisionRadius { set; get; }
+
+			public Body Clone()
+			{
+				return MemberwiseClone() as Body;
+			}
 		}
 	}
 }

@@ -142,8 +142,8 @@ namespace TpacTool.Lib
 
 				var metadataSize = stream.ReadUInt64();
                 var metadataStartPos = stream.BaseStream.Position;
-
-                stream.RecordPosition();
+                
+				stream.RecordPosition();
 				assetItem.ReadMetadata(stream, (int)metadataSize);
 				stream.AssertLength((long)metadataSize);
 
@@ -154,11 +154,9 @@ namespace TpacTool.Lib
                     // Force alignment if metadata reading didn't consume exact size
                     stream.BaseStream.Seek(expectedPos, SeekOrigin.Begin);
                 }
-
-                var unknownMetadataChecknum = stream.ReadInt64();
-
-				var dataSegmentNum = stream.ReadInt32();
-				var segments = new AbstractExternalLoader[dataSegmentNum];
+                assetItem.OriginalUnknownChecksum = stream.ReadInt64();
+                var dataSegmentNum = stream.ReadInt32();
+                var segments = new AbstractExternalLoader[dataSegmentNum];
 				for (int j = 0; j < dataSegmentNum; j++)
 				{
 					var segOffset = stream.ReadUInt64();
@@ -212,9 +210,9 @@ namespace TpacTool.Lib
 			}
 		}
 
-		// not finished yet
-		public void Save([CanBeNull] string newFilePath = null /*, bool resetFilePtrAfterSave = true*/, 
-			int tpacVersion = TPAC_LATEST_VERSION)
+        // not finished yet
+        public void Save([CanBeNull] string newFilePath = null, /*, bool resetFilePtrAfterSave = true*/
+			bool useOriginalChecksum = false, int tpacVersion = TPAC_LATEST_VERSION)
 		{
 			if (File == null && newFilePath == null)
 				throw new ArgumentNullException();
@@ -227,7 +225,7 @@ namespace TpacTool.Lib
 
 			using (var stream = new BinaryWriter(saveTargetFi.OpenWrite()))
 			{
-				Save(stream, tpacVersion);
+				Save(stream, useOriginalChecksum, tpacVersion);
 			}
 
 #if NETSTANDARD1_3
@@ -242,7 +240,7 @@ namespace TpacTool.Lib
 #endif
 		}
 
-		public virtual void Save(BinaryWriter stream, int tpacVersion = TPAC_LATEST_VERSION)
+		public virtual void Save(BinaryWriter stream, bool useOriginalChecksum, int tpacVersion = TPAC_LATEST_VERSION)
 		{
 			var shouldExportAssetVersion = tpacVersion > 1;
 			var sizeOfVersion = shouldExportAssetVersion ? sizeof(uint) : 0;
@@ -326,8 +324,10 @@ namespace TpacTool.Lib
 				var metadata = metadataQueue.Dequeue();
 				stream.Write((ulong) metadata.Length);
 				stream.Write(metadata);
-				stream.Write((ulong) 0); // wtf checksum
-
+                // wtf checksum
+                if (useOriginalChecksum) stream.Write(asset.OriginalUnknownChecksum);
+				else stream.Write((ulong)0); 
+                
 				stream.Write((uint) asset.TypelessDataSegments.Count);
 				for (int j = 0; j < asset.TypelessDataSegments.Count; j++)
 				{
@@ -379,7 +379,69 @@ namespace TpacTool.Lib
 			}
 		}
 
-		protected sealed class Segment
+
+        public void ReplaceGUIDs()
+        {
+            var shouldExportAssetVersion = TPAC_LATEST_VERSION > 1;
+            var sizeOfVersion = shouldExportAssetVersion ? sizeof(uint) : 0;
+
+            using (var stream = File.Open(FileMode.Open, FileAccess.ReadWrite))
+            {
+				var seekPos = 0;
+				//TPAC MAGIC NUMBER
+				seekPos += sizeof(uint);
+                //Version
+                seekPos += sizeof(int);
+                //Pack Guid
+                seekPos += 16;
+                //No of Resources
+                seekPos += sizeof(uint);
+                //Data Offset
+                seekPos += sizeof(uint);
+                //Reserve
+                seekPos += sizeof(int);
+
+                for (int i = 0; i < Items.Count; i++)
+                {
+					var asset = Items[i];
+					var metadata = asset.WriteMetadata();
+
+					//Resource Type Guid
+					seekPos += 16;
+					// Asset Guid
+					stream.Seek(seekPos, SeekOrigin.Begin);
+					var newGUID = Guid.NewGuid();
+
+					var streamPos = stream.Position;
+					var guidBytes = new byte[16];
+					stream.Read(guidBytes, 0, 16);
+					stream.Position = streamPos;
+
+					stream.Write(newGUID.ToByteArray(), 0, 16);
+					seekPos += sizeOfVersion; // version
+					seekPos += (int) Utils.GetStringSize(asset.Name, true); // name
+					seekPos += sizeof(ulong); // length of metadata
+					seekPos += metadata.Length; // metadata
+					seekPos += sizeof(long); // unknown checksum
+					seekPos += sizeof(uint); // segment num
+					seekPos += asset.TypelessDataSegments.Count * (
+									sizeof(ulong) // offset
+									+ sizeof(ulong) // actual size
+									+ sizeof(ulong) // storage size
+									+ 16 // seg guid
+									+ 16 // seg type guid
+									+ sizeof(ulong) // unknown ulong
+									+ sizeof(uint) // unknown uint
+									+ sizeof(byte) // storage format
+								);
+                    seekPos += sizeof(uint); // dep num
+					seekPos += asset.UnknownDependences.Count * (16 * 3);  // dep size			
+					seekPos += 16; //IDK what this is supposed to be yet. Maybe a GUID?
+				}
+            }
+        }
+
+        protected sealed class Segment
 		{
 			public AbstractExternalLoader Info;
 			public AbstractExternalLoader.StorageFormat Format;

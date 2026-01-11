@@ -25,7 +25,7 @@ namespace TpacTool.Lib
 
 		public uint UnknownRootScaleUint2 { set; get; } // always 16
 
-		public SortedList<float, AnimationFrame<Vector3>> RootScaleFrames { private set; get; }
+		public SortedList<float, AnimationFrame<Vector4>> RootScaleFrames { private set; get; }
 
 		public List<BoneAnim> BoneAnims { private set; get; }
 
@@ -33,7 +33,7 @@ namespace TpacTool.Lib
 		{
 			this.Name = String.Empty;
 			RootPositionFrames = new SortedList<float, AnimationFrame<Vector4>>(FloatComparer.CreateInstance());
-			RootScaleFrames = new SortedList<float, AnimationFrame<Vector3>>(FloatComparer.CreateInstance());
+			RootScaleFrames = new SortedList<float, AnimationFrame<Vector4>>(FloatComparer.CreateInstance());
 			BoneAnims = new List<BoneAnim>();
 			UnknownRootPositionUint1 = 0;
 			UnknownRootPositionUint2 = 16;
@@ -142,26 +142,26 @@ namespace TpacTool.Lib
 			return result.Item1;
 		}
 
-		public Tuple<Vector3, Vector3> GetNonInterpolatedScale(float time, out float lastFrame, out float nextFrame)
-		{
-			var result = GetNonInterpolatedPropertyDo(RootScaleFrames, time, Vector3.One);
-			lastFrame = result.Item1.Time;
-			nextFrame = result.Item2.Time;
-			return Tuple.Create(result.Item1.Value, result.Item2.Value);
-		}
+        public Tuple<Vector4, Vector4> GetNonInterpolatedScale(float time, out float lastFrame, out float nextFrame)
+        {
+            var result = GetNonInterpolatedPropertyDo(RootScaleFrames, time, Vector4.One);
+            lastFrame = result.Item1.Time;
+            nextFrame = result.Item2.Time;
+            return Tuple.Create(result.Item1.Value, result.Item2.Value);
+        }
 
-		public Vector3 GetInterpolatedScale(float time, out float lastFrame, out float nextFrame)
-		{
-			var result = GetNonInterpolatedScale(time, out lastFrame, out nextFrame);
-			if (Math.Abs(lastFrame - nextFrame) > 0.0001f)
-			{
-				var progress = (time - lastFrame) / (nextFrame - lastFrame);
-				return Vector3.Lerp(result.Item1, result.Item2, progress);
-			}
-			return result.Item1;
-		}
+        public Vector4 GetInterpolatedScale(float time, out float lastFrame, out float nextFrame)
+        {
+            var result = GetNonInterpolatedScale(time, out lastFrame, out nextFrame);
+            if (Math.Abs(lastFrame - nextFrame) > 0.0001f)
+            {
+                var progress = (time - lastFrame) / (nextFrame - lastFrame);
+                return Vector4.Lerp(result.Item1, result.Item2, progress);
+            }
+            return result.Item1;
+        }
 
-		public override void ReadData(BinaryReader stream, IDictionary<object, object> userdata, int totalSize)
+        public override void ReadData(BinaryReader stream, IDictionary<object, object> userdata, int totalSize)
 		{
 			this.Name = stream.ReadSizedString();
 			var num = stream.ReadInt32();
@@ -234,10 +234,9 @@ namespace TpacTool.Lib
 			for (int j = 0; j < length; j++)
 			{
 				RootScaleFrames.Add(tempFloats[j],
-					new AnimationFrame<Vector3>(tempFloats[j], stream.ReadVec4AsVec3()));
+					new AnimationFrame<Vector4>(tempFloats[j], stream.ReadVec4()));
 			}
 		}
-
 		public override void WriteData(BinaryWriter stream, IDictionary<object, object> userdata)
 		{
 			stream.WriteSizedString(Name);
@@ -292,11 +291,10 @@ namespace TpacTool.Lib
 			}
 			foreach (var frame in RootScaleFrames)
 			{
-				stream.WriteVec3AsVec4(frame.Value.Value);
-			}
+                stream.Write(frame.Value.Value);
+            }
 		}
-
-		public class BoneAnim : IPositionInterpolable, IRotationInterpolable
+        public class BoneAnim : IPositionInterpolable, IRotationInterpolable
 		{
 			public uint UnknownPositionUint1 { set; get; }
 
@@ -314,7 +312,7 @@ namespace TpacTool.Lib
 			{
 				PositionFrames = new SortedList<float, AnimationFrame<Vector4>>(FloatComparer.CreateInstance());
 				RotationFrames = new SortedList<float, AnimationFrame<Quaternion>>(FloatComparer.CreateInstance());
-				UnknownPositionUint1 = 0;
+                UnknownPositionUint1 = 0;
 				UnknownPositionUint2 = 16;
 				UnknownRotationUint1 = 0;
 				UnknownRotationUint2 = 16;
@@ -328,10 +326,9 @@ namespace TpacTool.Lib
 					UnknownPositionUint2 = this.UnknownPositionUint2,
 					UnknownRotationUint1 = this.UnknownRotationUint1,
 					UnknownRotationUint2 = this.UnknownRotationUint2,
-					PositionFrames = {Capacity = this.PositionFrames.Count},
-					RotationFrames = {Capacity = this.RotationFrames.Count}
-
-				};
+					PositionFrames = { Capacity = this.PositionFrames.Count },
+					RotationFrames = { Capacity = this.RotationFrames.Count },
+                };
 
 				foreach (var pair in this.PositionFrames)
 				{
@@ -342,7 +339,6 @@ namespace TpacTool.Lib
 				{
 					copy.RotationFrames[pair.Key] = pair.Value;
 				}
-
 				return copy;
 			}
 
@@ -442,14 +438,14 @@ namespace TpacTool.Lib
 			Tuple<Quaternion, Quaternion> GetNonInterpolatedRotation(float time, out float lastFrame, out float nextFrame);
 		}
 
-		public interface IScaleInterpolable
-		{
-			Vector3 GetInterpolatedScale(float time, out float lastFrame, out float nextFrame);
+        public interface IScaleInterpolable
+        {
+            Vector4 GetInterpolatedScale(float time, out float lastFrame, out float nextFrame);
 
-			Tuple<Vector3, Vector3> GetNonInterpolatedScale(float time, out float lastFrame, out float nextFrame);
-		}
+            Tuple<Vector4, Vector4> GetNonInterpolatedScale(float time, out float lastFrame, out float nextFrame);
+        }
 
-		internal class FloatComparer : IComparer<float>
+        internal class FloatComparer : IComparer<float>
 		{
 			public static FloatComparer CreateInstance() => new FloatComparer();
 

@@ -62,6 +62,18 @@
                                 <RadioButton Content="{x:Static loc:Resources.Animation_Export_FR_1}" ToolTip="{x:Static loc:Resources.Animation_Export_FR_1_Tooltip}" Margin="5" IsChecked="{Binding FrameRate, ConverterParameter=1, Converter={StaticResource FloatEqualConverter}, Mode=OneWay}" Command="{Binding ChangeFrameCommand, Mode=OneWay}" CommandParameter="1"/>
                             </StackPanel>
                         </GroupBox>
+                        <GroupBox Header="Preview Animation Clip">
+                            <StackPanel>
+                                <CheckBox Content="Enable Clip Preview" Margin="5,10,5,5" IsChecked="{Binding EnableAnimClipPreview, Mode=TwoWay}"/>
+                                <ComboBox Margin="5" ItemsSource="{Binding AnimationClips, Mode=OneWay}" SelectedIndex="{Binding SelectedAnimationClipIndex, Mode=TwoWay}" IsEnabled="{Binding EnableAnimClipPreview, Mode=OneWay}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </GroupBox>
                         <GroupBox Header="{x:Static loc:Resources.Model_Export_Misc}">
                             <StackPanel>
                                 <CheckBox Margin="5,10,5,5" Content="{x:Static loc:Resources.Model_Export_Misc_LargerScale}" ToolTip="{x:Static loc:Resources.Model_Export_Misc_LargerScale_Tooltip}" IsChecked="{Binding UseLargerScale, Mode=TwoWay}"/>

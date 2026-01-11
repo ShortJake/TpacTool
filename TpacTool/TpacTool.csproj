@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\Resource.Embedder.2.2.0\build\Resource.Embedder.props" Condition="Exists('..\packages\Resource.Embedder.2.2.0\build\Resource.Embedder.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -33,7 +32,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -62,15 +60,6 @@
     <ApplicationIcon>Properties\Logo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AssimpNet, Version=5.0.0.0, Culture=neutral, PublicKeyToken=0d51b391f59f42a6, processorArchitecture=MSIL">
-      <HintPath>..\packages\AssimpNet.5.0.0-beta1\lib\net40\AssimpNet.dll</HintPath>
-    </Reference>
-    <Reference Include="BetterWpfControls, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BetterWpfControls.0.12\lib\net40\BetterWpfControls.dll</HintPath>
-    </Reference>
-    <Reference Include="CommonServiceLocator, Version=2.0.5.0, Culture=neutral, PublicKeyToken=489b6accfaf20ef0, processorArchitecture=MSIL">
-      <HintPath>..\packages\CommonServiceLocator.2.0.5\lib\net46\CommonServiceLocator.dll</HintPath>
-    </Reference>
     <Reference Include="GalaSoft.MvvmLight, Version=5.4.1.0, Culture=neutral, PublicKeyToken=e7570ab207bcb616, processorArchitecture=MSIL">
       <HintPath>..\packages\MvvmLightLibs.5.4.1.1\lib\net45\GalaSoft.MvvmLight.dll</HintPath>
     </Reference>
@@ -80,17 +69,8 @@
     <Reference Include="GalaSoft.MvvmLight.Platform, Version=5.4.1.0, Culture=neutral, PublicKeyToken=5f873c45e98af8a1, processorArchitecture=MSIL">
       <HintPath>..\packages\MvvmLightLibs.5.4.1.1\lib\net45\GalaSoft.MvvmLight.Platform.dll</HintPath>
     </Reference>
-    <Reference Include="GLWpfControl, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OpenTK.GLWpfControl.3.3.0\lib\net452\GLWpfControl.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
-    <Reference Include="Ookii.Dialogs.Wpf, Version=5.0.0.0, Culture=neutral, PublicKeyToken=66aa232afad40158, processorArchitecture=MSIL">
-      <HintPath>..\packages\Ookii.Dialogs.Wpf.5.0.1\lib\net462\Ookii.Dialogs.Wpf.dll</HintPath>
-    </Reference>
-    <Reference Include="OpenTK, Version=3.3.2.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
-      <HintPath>..\packages\OpenTK.3.3.2\lib\net20\OpenTK.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationFramework.Aero" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -98,9 +78,6 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime, Version=4.1.1.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.4.3.1\lib\net462\System.Runtime.dll</HintPath>
     </Reference>
@@ -122,9 +99,6 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="UkooLabs.FbxSharpie, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\UkooLabs.FbxSharpie.1.0.99\lib\netstandard2.0\UkooLabs.FbxSharpie.dll</HintPath>
-    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -134,6 +108,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="OpenGL\AnimationManager.cs" />
     <Compile Include="OpenGL\MeshManager.cs" />
     <Compile Include="OpenGL\Renderer.cs" />
     <Compile Include="OpenGL\ShaderManager.cs" />
@@ -150,6 +125,42 @@
     <Compile Include="Page\OglPreviewPage.xaml.cs">
       <DependentUpon>OglPreviewPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenCopyFromLoop.xaml.cs">
+      <DependentUpon>AnimGenCopyFromLoop.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenCopyFromStretch.xaml.cs">
+      <DependentUpon>AnimGenCopyFromStretch.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenMirror.xaml.cs">
+      <DependentUpon>AnimGenMirror.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenStatic.xaml.cs">
+      <DependentUpon>AnimGenStatic.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenTail.xaml.cs">
+      <DependentUpon>AnimGenTail.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenTailAndCopyFromLoop.xaml.cs">
+      <DependentUpon>AnimGenTailAndCopyFromLoop.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenTailAndCopyFromStretch.xaml.cs">
+      <DependentUpon>AnimGenTailAndCopyFromStretch.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletalAnimGenPages\AnimGenTailAndMirror.xaml.cs">
+      <DependentUpon>AnimGenTailAndMirror.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletonD6Joint.xaml.cs">
+      <DependentUpon>SkeletonD6Joint.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletonIKJoint.xaml.cs">
+      <DependentUpon>SkeletonIKJoint.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletonBody.xaml.cs">
+      <DependentUpon>SkeletonBody.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Page\SkeletonPage.xaml.cs">
+      <DependentUpon>SkeletonPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Properties\Settings.cs" />
     <Compile Include="UserControl\Vec4Box.xaml.cs">
       <DependentUpon>Vec4Box.xaml</DependentUpon>
@@ -165,6 +176,13 @@
     <Compile Include="Util\StringEqualConverter.cs" />
     <Compile Include="Util\TypeHelper.cs" />
     <Compile Include="ViewModel\AnimationViewModel.cs" />
+    <Compile Include="ViewModel\SkeletalAnimGenViewModels\SkeletalAnimGenMirrorVM.cs" />
+    <Compile Include="ViewModel\SkeletalAnimGenViewModels\SkeletalAnimGenCopyFromVM.cs" />
+    <Compile Include="ViewModel\SkeletalAnimGenViewModels\SkeletalAnimGenBaseVM.cs" />
+    <Compile Include="ViewModel\SkeletalAnimGenViewModels\SkeletalAnimGenTailVM.cs" />
+    <Compile Include="ViewModel\SkeletalAnimGenViewModels\SkeletalAnimGenStaticVM.cs" />
+    <Compile Include="ViewModel\SkeletalAnimGenViewModels\AnimGenProgressViewModel.cs" />
+    <Compile Include="ViewModel\SkeletalAnimGenViewModels\AnimGenSelectionViewModel.cs" />
     <Compile Include="ViewModel\AssetTreeViewModel.cs" />
     <Compile Include="ViewModel\AssetViewModel.cs" />
     <Compile Include="ViewModel\OglPreviewViewModel.cs" />
@@ -172,6 +190,7 @@
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\MaterialViewModel.cs" />
     <Compile Include="ViewModel\ModelViewModel.cs" />
+    <Compile Include="ViewModel\SkeletonViewModel.cs" />
     <Compile Include="ViewModel\TextureViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Compile Include="Window\AboutWindow.xaml.cs">
@@ -185,6 +204,12 @@
     </Compile>
     <Compile Include="Page\BlankPreviewPage.xaml.cs">
       <DependentUpon>BlankPreviewPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Window\AnimGenProgressWindow.xaml.cs">
+      <DependentUpon>AnimGenProgressWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Window\AnimGenSelectionWindow.xaml.cs">
+      <DependentUpon>AnimGenSelectionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Window\LoadingWindow.xaml.cs">
       <DependentUpon>LoadingWindow.xaml</DependentUpon>
@@ -211,6 +236,54 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenCopyFromLoop.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenCopyFromStretch.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenMirror.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenStatic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenTail.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenTailAndCopyFromLoop.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenTailAndCopyFromStretch.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletalAnimGenPages\AnimGenTailAndMirror.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletonD6Joint.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletonIKJoint.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletonBody.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\SkeletonPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="UserControl\Vec4Box.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -230,6 +303,14 @@
     <Page Include="Page\BlankPreviewPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Window\AnimGenProgressWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Window\AnimGenSelectionWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Window\LoadingWindow.xaml">
       <SubType>Designer</SubType>
@@ -276,8 +357,6 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.zh-CN.resx" />
-    <None Include="OpenTK.dll.config" />
-    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>PublicSettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -326,7 +405,38 @@
   <ItemGroup>
     <Resource Include="Properties\Logo.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <PackageReference Include="AssimpNet">
+      <Version>5.0.0-beta1</Version>
+    </PackageReference>
+    <PackageReference Include="BetterWpfControls">
+      <Version>0.12.0</Version>
+    </PackageReference>
+    <PackageReference Include="CommonServiceLocator">
+      <Version>2.0.5</Version>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm">
+      <Version>8.4.0</Version>
+    </PackageReference>
+    <PackageReference Include="Ookii.Dialogs.Wpf">
+      <Version>5.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="OpenTK">
+      <Version>3.3.2</Version>
+    </PackageReference>
+    <PackageReference Include="OpenTK.GLWpfControl">
+      <Version>3.3.0</Version>
+    </PackageReference>
+    <PackageReference Include="Resource.Embedder">
+      <Version>2.2.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Runtime">
+      <Version>4.3.1</Version>
+    </PackageReference>
+    <PackageReference Include="UkooLabs.FbxSharpie">
+      <Version>1.0.99</Version>
+    </PackageReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="AfterBuild.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

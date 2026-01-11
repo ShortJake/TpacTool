@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -11,22 +12,65 @@ using TpacTool.IO;
 using TpacTool.IO.Assimp;
 using TpacTool.Lib;
 using TpacTool.Properties;
+using MessageBox = System.Windows.MessageBox;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
+using Settings = TpacTool.Properties.Settings;
 
 namespace TpacTool
 {
 	public class AnimationViewModel : ViewModelBase
 	{
 		private List<Skeleton> _skeletons = new List<Skeleton>();
-
+		/// <summary>
+		/// Holds all loaded animation clips. Key is the GUID of a skeletal animation, and the value is the list of animation clips that use that skeletal animation
+		/// </summary>
+		private Dictionary<Guid, List<AnimationClip>> _animationClipDict = new Dictionary<Guid, List<AnimationClip>>();
+        
 		private Skeleton _human_skeleton;
 
 		private Skeleton _horse_skeleton;
+		private int _selectedSkeletonIndex = -1;
+        private int _selectedAnimationClipIndex = -1;
+		private bool _enableAnimClipPreview;
 
-		public List<Skeleton> Skeletons => _skeletons;
+        public List<Skeleton> Skeletons => _skeletons;
 
-		public int SelectedSkeletonIndex { set; get; } = -1;
+		public int SelectedSkeletonIndex 
+		{ 
+			set 
+			{
+				if (value == _selectedSkeletonIndex) return;
+				_selectedSkeletonIndex = value;
+				SendAnimationPreviewEvent();
+			}
+			get => _selectedSkeletonIndex;
+		}
+		public ObservableCollection<AnimationClip> AnimationClips { get; } = new ObservableCollection<AnimationClip>();
 
-		private List<Metamesh> _unfilteredModels = new List<Metamesh>();
+        public int SelectedAnimationClipIndex
+        {
+            set
+            {
+                if (value == _selectedAnimationClipIndex) return;
+                _selectedAnimationClipIndex = value;
+                SendAnimationPreviewEvent();
+            }
+            get => _selectedAnimationClipIndex;
+        }
+
+		public bool EnableAnimClipPreview
+        {
+            set
+            {
+                if (value == _enableAnimClipPreview) return;
+                _enableAnimClipPreview = value;
+				RaisePropertyChanged(nameof(EnableAnimClipPreview));
+				SendAnimationPreviewEvent();
+            }
+            get => _enableAnimClipPreview;
+        }
+
+        private List<Metamesh> _unfilteredModels = new List<Metamesh>();
 
 		private List<Metamesh> _models = new List<Metamesh>();
 
@@ -47,8 +91,9 @@ namespace TpacTool
 		public ICommand ExportAnimationCommand { private set; get; }
 
 		public ICommand ExportMorphCommand { private set; get; }
+        public ICommand ExportAnimationClipCommand { private set; get; }
 
-		private SaveFileDialog _saveFileDialog;
+        private SaveFileDialog _saveFileDialog;
 
 		private SkeletalAnimation _animationAsset;
 
@@ -180,8 +225,9 @@ namespace TpacTool
 		}
 
 		public bool CanExport => AssimpModelExporter.IsAssimpAvailable();
+        public bool CanExportAnimationClip => AssimpModelExporter.IsAssimpAvailable() && SelectedAnimationClipIndex > 0;
 
-		public AnimationViewModel()
+        public AnimationViewModel()
 		{
 			if (IsInDesignMode)
 			{
@@ -208,7 +254,8 @@ namespace TpacTool
 				{
 					SkeletonType.TryParse(arg, true, out SkeletonType result);
 					ExportedSkeletonType = result;
-				});
+                    SendAnimationPreviewEvent();
+                });
 
 				ChangeModelCommand = new RelayCommand<string>(arg =>
 				{
@@ -226,21 +273,41 @@ namespace TpacTool
 
 					FrameRate = frame;
 					RaisePropertyChanged(nameof(FrameRate));
-				});
+                    SendAnimationPreviewEvent();
+                });
 
 				ExportAnimationCommand = new RelayCommand(ExportAnimation);
-
+				ExportAnimationClipCommand = new RelayCommand(ExportAnimationClip);
 				ExportMorphCommand = new RelayCommand(ExportMorph);
 
-				MessengerInstance.Register<AssetItem>(this, AssetTreeViewModel.AssetSelectedEvent, asset =>
+                MessengerInstance.Register<AssetItem>(this, AssetTreeViewModel.AssetSelectedEvent, asset =>
 				{
 					if (asset is SkeletalAnimation animation)
-						AnimationAsset = animation;
-					else if (asset is MorphAnimation morph)
-						MorphAsset = morph;
+                    {
+                        AnimationAsset = animation;
+                        SendAnimationPreviewEvent();
+
+						AnimationClips.Clear();
+						SelectedAnimationClipIndex = -1;
+                        EnableAnimClipPreview = false;
+                        if (_animationClipDict.TryGetValue(animation.Guid, out var clips))
+						{
+							foreach (var clip in clips)
+							{
+								AnimationClips.Add(clip);
+							}
+                        }
+                        RaisePropertyChanged(nameof(EnableAnimClipPreview));
+                        RaisePropertyChanged(nameof(SelectedAnimationClipIndex));
+                        RaisePropertyChanged(nameof(AnimationClips));
+                    }
+                    else if(asset is MorphAnimation morph)
+					{
+                        MorphAsset = morph;
+                    }
 				});
 
-				MessengerInstance.Register<IEnumerable<Skeleton>>(this, ModelViewModel.UpdateSkeletonListEvent, skeletons =>
+                MessengerInstance.Register<IEnumerable<Skeleton>>(this, ModelViewModel.UpdateSkeletonListEvent, skeletons =>
 				{
 					_skeletons.Clear();
 					_skeletons.AddRange(skeletons);
@@ -251,6 +318,19 @@ namespace TpacTool
 							_human_skeleton = skeleton;
 						else if (skeleton.Name == "horse_skeleton")
 							_horse_skeleton = skeleton;
+					}
+
+					_animationClipDict.Clear();
+                    foreach (var item in MainViewModel.Instance.AssetManager.LoadedAssets.OfType<AnimationClip>())
+					{
+						// Don't add autogenerated blended combat animations
+						if (item.GeneratedIndex != -1) continue;
+						if (!_animationClipDict.TryGetValue(item.Animation, out var list))
+						{
+							list = new List<AnimationClip>();
+							_animationClipDict.Add(item.Animation, list);
+						}
+						_animationClipDict[item.Animation].Add(item);
 					}
 					RaisePropertyChanged(nameof(Skeletons));
 				});
@@ -271,9 +351,10 @@ namespace TpacTool
 					RaisePropertyChanged(nameof(Models));
 				});
 
-				MessengerInstance.Register<object>(this, MainViewModel.CleanupEvent, unused =>
+                MessengerInstance.Register<object>(this, MainViewModel.CleanupEvent, unused =>
 				{
 					_skeletons.Clear();
+                    AnimationClips.Clear();
 					_human_skeleton = null;
 					_horse_skeleton = null;
 					AnimationAsset = null;
@@ -285,11 +366,33 @@ namespace TpacTool
 					RaisePropertyChanged(nameof(Skeletons));
 					RaisePropertyChanged(nameof(Models));
 					RaisePropertyChanged(nameof(AnimationAsset));
-				});
+                    RaisePropertyChanged(nameof(AnimationClips));
+                });
 			}
 		}
 
-		public void ExportAnimation()
+        private void SendAnimationPreviewEvent()
+        {
+			Skeleton skeleton;
+			switch (ExportedSkeletonType)
+			{
+				case SkeletonType.Human: skeleton = _human_skeleton;
+					break;
+				case SkeletonType.Horse: skeleton = _horse_skeleton;
+					break;
+				case SkeletonType.Other:
+					if (SelectedSkeletonIndex >= 0) skeleton = Skeletons[SelectedSkeletonIndex];
+					else skeleton = null;
+					break;
+				default: skeleton = DefaultSkeleton; 
+					break;
+			}
+			AnimationClip animClip = null;
+			if (SelectedAnimationClipIndex > -1 && EnableAnimClipPreview) animClip = AnimationClips[SelectedAnimationClipIndex];
+            MessengerInstance.Send((skeleton, AnimationAsset, (int)FrameRate, animClip), OglPreviewViewModel.PreviewAnimationEvent);
+        }
+
+        public void ExportAnimation()
 		{
 			Export(true, false);
 		}
@@ -419,5 +522,10 @@ namespace TpacTool
 				MessengerInstance.Send(string.Format("{0} exported", assetName), MainViewModel.StatusEvent);
 			}
 		}
-	}
+
+        public void ExportAnimationClip()
+		{
+			throw new NotImplementedException();
+		}
+    }
 }

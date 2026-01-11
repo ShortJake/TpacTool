@@ -60,15 +60,29 @@ namespace TpacTool
 			SimpleIoc.Default.Register<MaterialViewModel>();
 			SimpleIoc.Default.Register<AnimationViewModel>();
 			SimpleIoc.Default.Register<OglPreviewViewModel>();
-			
-			ViewModelBase unused = null;
+            SimpleIoc.Default.Register<SkeletonViewModel>();
+            SimpleIoc.Default.Register<SkeletalAnimGenStaticVM>();
+            SimpleIoc.Default.Register<SkeletalAnimGenCopyFromVM>();
+            SimpleIoc.Default.Register<SkeletalAnimGenMirrorVM>();
+            SimpleIoc.Default.Register<SkeletalAnimGenTailVM>();
+            SimpleIoc.Default.Register<AnimGenProgressViewModel>();
+            SimpleIoc.Default.Register<AnimGenSelectionViewModel>();
+
+            ViewModelBase unused = null;
 			// force init preview and panel
 			unused = OglPreview;
 			unused = Model;
-			unused = Texture;
+            unused = Skeleton;
+            unused = Texture;
 			unused = Material;
 			unused = Animation;
-		}
+			unused = SkeletalAnimGenStatic;
+            unused = SkeletalAnimGenCopyFrom;
+            unused = SkeletalAnimGenMirror;
+            unused = SkeletalAnimGenTail;
+            unused = AnimGenProgress;
+            unused = AnimGenSelection;
+        }
 
         public MainViewModel Main => ServiceLocator.Current.GetInstance<MainViewModel>();
 
@@ -84,7 +98,16 @@ namespace TpacTool
 
 		public AnimationViewModel Animation => ServiceLocator.Current.GetInstance<AnimationViewModel>();
 
-		public static void Cleanup()
+        public SkeletonViewModel Skeleton => ServiceLocator.Current.GetInstance<SkeletonViewModel>();
+        //public AnimGenDataViewModel AnimGenData => ServiceLocator.Current.GetInstance<AnimGenDataViewModel>();
+        public SkeletalAnimGenStaticVM SkeletalAnimGenStatic => ServiceLocator.Current.GetInstance<SkeletalAnimGenStaticVM>();
+        public SkeletalAnimGenCopyFromVM SkeletalAnimGenCopyFrom => ServiceLocator.Current.GetInstance<SkeletalAnimGenCopyFromVM>();
+        public SkeletalAnimGenMirrorVM SkeletalAnimGenMirror => ServiceLocator.Current.GetInstance<SkeletalAnimGenMirrorVM>();
+        public SkeletalAnimGenTailVM SkeletalAnimGenTail => ServiceLocator.Current.GetInstance<SkeletalAnimGenTailVM>();
+        public AnimGenProgressViewModel AnimGenProgress => ServiceLocator.Current.GetInstance<AnimGenProgressViewModel>();
+        public AnimGenSelectionViewModel AnimGenSelection => ServiceLocator.Current.GetInstance<AnimGenSelectionViewModel>();
+
+        public static void Cleanup()
         {
             // TODO Clear the ViewModels
         }

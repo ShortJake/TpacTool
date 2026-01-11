@@ -28,6 +28,8 @@ namespace TpacTool
 	{
 		//private static readonly Uri Uri_Page_Empty = new Uri("");
 
+		public static MainViewModel Instance;
+
 		private static readonly Uri Uri_Page_Blank = new Uri("../Page/BlankPage.xaml", UriKind.Relative);
 
 		private static readonly Uri Uri_Page_BlankPreview = new Uri("../Page/BlankPreviewPage.xaml", UriKind.Relative);
@@ -44,7 +46,9 @@ namespace TpacTool
 
 		private static readonly Uri Uri_Page_Morph = new Uri("../Page/MorphPage.xaml", UriKind.Relative);
 
-		public static readonly Guid CleanupEvent = Guid.NewGuid();
+        private static readonly Uri Uri_Page_Skeleton = new Uri("../Page/SkeletonPage.xaml", UriKind.Relative);
+
+        public static readonly Guid CleanupEvent = Guid.NewGuid();
 
 		public static readonly Guid StatusEvent = Guid.NewGuid();
 
@@ -111,6 +115,8 @@ namespace TpacTool
 
 		public MainViewModel()
 		{
+			Instance = this;
+
 			TabPages = new ObservableCollection<BetterWpfControls.TabItem>();
 
 			if (IsInDesignMode)
@@ -437,7 +443,7 @@ namespace TpacTool
 				if (AssetPanelUri != Uri_Page_Animation)
 				{
 					AssetPanelUri = Uri_Page_Animation;
-					AssetPreviewUri = Uri_Page_BlankPreview;
+					AssetPreviewUri = Uri_Page_OglPreview;
 				}
 				hasContent = true;
 			}
@@ -452,7 +458,17 @@ namespace TpacTool
 				hasContent = true;
 			}
 
-			if (!hasContent)
+            if (asset is Skeleton skeleton)
+            {
+                if (AssetPanelUri != Uri_Page_Skeleton)
+                {
+                    AssetPanelUri = Uri_Page_Skeleton;
+                    AssetPreviewUri = Uri_Page_OglPreview;
+                }
+                hasContent = true;
+            }
+
+            if (!hasContent)
 			{
 				if (AssetPanelUri != Uri_Page_Blank)
 					AssetPanelUri = Uri_Page_Blank;
