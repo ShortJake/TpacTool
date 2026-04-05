@@ -523,7 +523,7 @@ namespace TpacTool
                 var index = clonedPackage.Items.IndexOf(_humanSkeleton);
                 clonedPackage.Items.Remove(_humanSkeleton);
                 clonedPackage.Items.Insert(index, clonedSkeleton);
-                clonedPackage.Save(path);
+                clonedPackage.Save(path, true);
             }
 
         }

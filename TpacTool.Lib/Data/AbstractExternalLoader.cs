@@ -54,6 +54,13 @@ namespace TpacTool.Lib
 		internal protected abstract void SaveTo(BinaryWriter stream, 
 			out ulong actualSize, out ulong storageSize, out StorageFormat storageType);
 
+		internal void CopyMetaDataFrom(AbstractExternalLoader copiedFrom)
+		{
+			OwnerGuid = copiedFrom.OwnerGuid;
+			_unknownUlong = copiedFrom._unknownUlong;
+			_unknownUint = copiedFrom._unknownUint;
+		}
+
 		public abstract void MarkLongLive();
 
 		public virtual bool IsLargeData

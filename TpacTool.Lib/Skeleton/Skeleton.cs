@@ -61,11 +61,12 @@ namespace TpacTool.Lib
 			{
 				clone.Definition =
 					new ExternalLoader<SkeletonDefinitionData>((SkeletonDefinitionData) Definition.Data.Clone());
+				clone.Definition.CopyMetaDataFrom(Definition);
 			}
 			if (UserData != null)
 			{
 				clone.UserData = new ExternalLoader<SkeletonUserData>((SkeletonUserData)UserData.Data.Clone());
-				clone.UserData.OwnerGuid = Guid;
+				clone.UserData.CopyMetaDataFrom(UserData);
 			}
 			clone.SetDataSegment(null, clone.Definition);
 			clone.SetDataSegment(null, clone.UserData);

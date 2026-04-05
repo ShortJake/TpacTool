@@ -33,8 +33,9 @@ namespace TpacTool.Lib
 
 		[NotNull]
 		public AssetDependence<Material> SecondMaterial { set; get; }
+        public uint SubVersion { set; get; }
 
-		public Vector4 FactorColor { set; get; }
+        public Vector4 FactorColor { set; get; }
 
 		public Vector4 Factor2Color { set; get; }
 
@@ -107,7 +108,7 @@ namespace TpacTool.Lib
 			Lod = stream.ReadInt32();
 			UnknownUint1 = stream.ReadUInt32();
 			SecondMaterial = new AssetDependence<Material>(stream.ReadGuid());
-			var subVersion = stream.ReadUInt32();
+			SubVersion = stream.ReadUInt32();
 			Guid = stream.ReadGuid();
 			Name = stream.ReadSizedString();
 			UnknownUInt2 = stream.ReadUInt32(); // always 0
@@ -132,7 +133,7 @@ namespace TpacTool.Lib
 			UnknownInt3 = stream.ReadInt32();
 			UnknownBool1 = stream.ReadBoolean();
 			UnknownBool2 = stream.ReadBoolean();
-			if (subVersion >= 1)
+			if (SubVersion >= 1)
 			{
 				ClothingMaterial.ReadExtraData(stream);
 				//UnknownFloat2 = stream.ReadSingle();
@@ -147,7 +148,7 @@ namespace TpacTool.Lib
 			stream.Write(Lod);
 			stream.Write(UnknownUint1);
 			stream.Write(SecondMaterial.Guid);
-			stream.Write((int) 1);
+			stream.Write(SubVersion);
 			stream.Write(Guid);
 			stream.WriteSizedString(Name);
 			stream.Write(UnknownUInt2);

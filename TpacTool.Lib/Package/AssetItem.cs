@@ -95,6 +95,9 @@ namespace TpacTool.Lib
 			{
 				this.UnknownDependences.Add(dependence.Clone());
 			}
+			// Should probably figure out whatever algorithm is being used to generate the checksum and use that instead of 
+			// blindly copying
+			this.OriginalUnknownChecksum = parent.OriginalUnknownChecksum;
 		}
 
 		protected void SetDataSegment([CanBeNull] AbstractExternalLoader oldValue, [CanBeNull] AbstractExternalLoader newValue)
